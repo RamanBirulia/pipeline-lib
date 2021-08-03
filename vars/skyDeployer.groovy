@@ -6,11 +6,6 @@ import com.pipeline.deploy.Github
 
 @Field releaseProjectSubdir = '__release'
 
-def wrapPodTemplate(Map args = [:]) {
-  // Left for backwards compatibility
-  args
-}
-
 def wrapProperties(providedProperties = []) {
   def isPRBuild = !!env.CHANGE_ID
   if (isPRBuild) {
@@ -39,21 +34,19 @@ def wrapProperties(providedProperties = []) {
     tags.add("github_user=${Deployer.deployingUser(this)}")
 
     // Stop all previous builds that are still in progress
-    while(currentBuild.rawBuild.getPreviousBuildInProgress() != null) {
+
+    // TODO: do not stop pipeline in rollback state
+
+    while (currentBuild.rawBuild.getPreviousBuildInProgress() != null) {
       echo("Stopping ${currentBuild.rawBuild.getPreviousBuildInProgress()?.getAbsoluteUrl()}")
       currentBuild.rawBuild.getPreviousBuildInProgress()?.doStop()
       // Give the job some time to finish before trying again
-      sleep(time: 10, unit: 'SECONDS')
+      sleep(time: 60, unit: 'SECONDS')
     }
   }
 
   providedProperties + [
-    pipelineTriggers([issueCommentTrigger(Deployer.triggerPattern)]),
-    [
-      $class: 'DatadogJobProperty',
-      enableProperty: true,
-      tagProperties: tags.join("\n")
-    ]
+    pipelineTriggers([issueCommentTrigger(Deployer.triggerPattern)])
   ]
 }
 
@@ -75,38 +68,15 @@ def buildImageIfDoesNotExist(Map args, Closure body) {
   Deployer.buildImageIfDoesNotExist(this, args.name, body)
 }
 
-private def inToolbox(Map args = [:], Closure body) {
-  def defaultArgs = [
-    containers: [toolboxContainer()]
-  ]
-  def finalContainers = addWithoutDuplicates((args.containers ?: []), defaultArgs.containers) { it.getArguments().name }
-  def finalArgs = defaultArgs << args << [containers: finalContainers]
+// --------------------------------
+// TODO replace to general solution
+// --------------------------------
 
-  inPod(finalArgs) {
-    checkout([
-      $class: 'GitSCM',
-      branches: [[name: 'master']],
-      userRemoteConfigs: [[
-        url: 'git@github.com:salemove/release.git',
-        credentialsId: scm.userRemoteConfigs[0].credentialsId
-      ]],
-      extensions: [
-        [$class: 'RelativeTargetDirectory', relativeTargetDir: releaseProjectSubdir],
-        [$class: 'CloneOption', noTags: true, shallow: true]
-      ]
-    ])
 
-    container('toolbox') {
-      ansiColor('xterm') {
-        body()
-      }
-    }
-  }
-}
-
+// Can be moved out of the deployer codebase
 def publishAssets(Map args) {
   def defaultArgs = [
-    s3Bucket: 'libs.salemove.com',
+    s3Bucket: 'REPLACEME',
     cacheMaxAge: 31536000 // seconds
   ]
   def finalArgs = defaultArgs << args
@@ -118,6 +88,7 @@ def publishAssets(Map args) {
     string(variable: 'assumer', credentialsId: 'asset-publisher-assumer-iam-role'),
     string(variable: 'publisher', credentialsId: 'asset-publisher-iam-role')
   ]) {
+    // Replace to real function
     inToolbox(annotations: [podAnnotation(key: 'iam.amazonaws.com/role', value: assumer)]) {
       unstash(assetsStash)
 
@@ -138,6 +109,7 @@ def deployAssetsVersion(Map args) {
     stash(name: integritiesStash, includes: args.integritiesFile)
   }
 
+  // replace to real function
   inToolbox {
     lock('acceptance-environment') {
       def script = "${releaseProjectSubdir}/update_static_asset_versions"
@@ -146,59 +118,6 @@ def deployAssetsVersion(Map args) {
         sh("${script} ${args.version} ${args.integritiesFile}")
       } else {
         sh("${script} ${args.version}")
-      }
-    }
-  }
-}
-
-def publishDocs(Map args) {
-  def branchName = 'gitbooks'
-  def docStash = 'doc-stash'
-  stash(name: docStash, includes: args.source)
-
-  stage('Publish docs') {
-    inPod(containers: [
-      interactiveContainer(name: 'toolbox', image: 'salemove/jenkins-toolbox:a99ffb7')
-    ]) {
-      checkout([
-        $class: 'GitSCM',
-        branches: [[name: branchName]],
-        userRemoteConfigs: [[
-          url: 'git@github.com:salemove/salemove.github.io.git',
-          credentialsId: scm.userRemoteConfigs[0].credentialsId
-        ]]
-      ])
-
-      container('toolbox') {
-        sshagent([scm.userRemoteConfigs[0].credentialsId]) {
-          sh("""\
-            # Enable GitHub to link new commits to the sm-deployer user.
-            git config user.name 'sm-deployer'
-            git config user.email 'support@salemove.com'
-
-            git checkout -b ${branchName}
-          """.stripIndent())
-
-          dir('tmp') {
-            unstash(docStash)
-          }
-
-          sh("mkdir -p \$(dirname ${args.destination})")
-          sh("mv tmp/${args.source} ${args.destination}")
-
-          try {
-            sh("""\
-              git add ${args.destination}
-              git commit -F- <<EOF && git push -u origin ${branchName}
-              Publish documentation
-
-              Automatically created using publishDocs().
-              EOF
-            """.stripIndent())
-          } catch(e) {
-            sh("echo 'Creating documentation commit failed. Probably nothing to commit.'")
-          }
-        }
       }
     }
   }
