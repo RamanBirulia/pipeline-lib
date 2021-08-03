@@ -1,4 +1,4 @@
-package com.salemove
+package com.pipeline
 
 class Communication {
   static final SLACK_RETRIES = 3

@@ -1,8 +1,8 @@
 import groovy.transform.Field
 
-import static com.salemove.Collections.addWithoutDuplicates
-import com.salemove.Deployer
-import com.salemove.deploy.Github
+import static com.pipeline.Collections.addWithoutDuplicates
+import com.pipeline.Deployer
+import com.pipeline.deploy.Github
 
 @Field releaseProjectSubdir = '__release'
 

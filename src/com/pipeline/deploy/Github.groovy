@@ -1,6 +1,6 @@
-package com.salemove.deploy
+package com.pipeline.deploy
 
-import static com.salemove.Collections.joinWithAnd
+import static com.pipeline.Collections.joinWithAnd
 
 class Github implements Serializable {
   public static final deployStatusContext = 'continuous-integration/jenkins/pr-merge/deploy'

@@ -1,4 +1,4 @@
-import static com.salemove.Collections.addWithoutDuplicates
+import static com.pipeline.Collections.addWithoutDuplicates
 
 def call(Map args = [:], Closure body) {
   def defaultArgs = [

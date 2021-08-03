@@ -1,4 +1,4 @@
-package com.salemove
+package com.pipeline
 
 class Datadog {
   public static final podYAML = '''\

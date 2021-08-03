@@ -1,11 +1,11 @@
-package com.salemove
+package com.pipeline
 
 import org.yaml.snakeyaml.Yaml
-import com.salemove.Datadog
-import com.salemove.deploy.Args
-import com.salemove.deploy.Git
-import com.salemove.deploy.Github
-import com.salemove.deploy.Notify
+import com.pipeline.Datadog
+import com.pipeline.deploy.Args
+import com.pipeline.deploy.Git
+import com.pipeline.deploy.Github
+import com.pipeline.deploy.Notify
 
 class Deployer implements Serializable {
   public static final triggerPattern = /

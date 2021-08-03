@@ -1,4 +1,4 @@
-package com.salemove
+package com.pipeline
 
 class Collections {
   static def addWithoutDuplicates(precedenceList, otherList, Closure selector) {

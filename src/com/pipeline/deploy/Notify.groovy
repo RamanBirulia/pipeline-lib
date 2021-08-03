@@ -1,7 +1,7 @@
-package com.salemove.deploy
+package com.pipeline.deploy
 
-import com.salemove.deploy.Args
-import static com.salemove.Communication.safeSlackSend
+import com.pipeline.deploy.Args
+import static com.pipeline.Communication.safeSlackSend
 
 class Notify implements Serializable {
   private def script, kubernetesDeployment, kubernetesNamespace, threadIds

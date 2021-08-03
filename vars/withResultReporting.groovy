@@ -1,5 +1,5 @@
 import jenkins.model.*
-import static com.salemove.Communication.safeSlackSend
+import static com.pipeline.Communication.safeSlackSend
 
 def call(Map args = [:], Closure body) {
   def defaultArgs = [

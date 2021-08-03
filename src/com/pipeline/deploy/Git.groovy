@@ -1,4 +1,4 @@
-package com.salemove.deploy
+package com.pipeline.deploy
 
 class Git implements Serializable {
   private static final deployerSSHAgent = 'c5628152-9b4d-44ac-bd07-c3e2038b9d06'

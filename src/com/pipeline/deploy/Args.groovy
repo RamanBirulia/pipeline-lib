@@ -1,4 +1,4 @@
-package com.salemove.deploy
+package com.pipeline.deploy
 
 
 class Args implements Serializable {
