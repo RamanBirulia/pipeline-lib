@@ -1,5 +1,5 @@
 FROM golang:1.10-alpine as builder
-WORKDIR /go/src/github.com/salemove/deploy-pipeline-test
+WORKDIR /go/src/deploy-pipeline-test
 COPY app.go .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
 
@@ -11,6 +11,6 @@ RUN apk --no-cache add curl
 ARG BUILD_VALUE
 ENV BUILD_VALUE ${BUILD_VALUE}
 WORKDIR /root/
-COPY --from=builder /go/src/github.com/salemove/deploy-pipeline-test/app .
+COPY --from=builder /go/src/deploy-pipeline-test/app .
 COPY test.sh .
 CMD ["./app"]

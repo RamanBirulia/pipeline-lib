@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1.0.0-experimental
+FROM alpine:latest as builder
+
+RUN apk --no-cache add curl
+RUN apk add --no-cache openssh-client git
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+# TODO replace with company specific repo
+RUN --mount=type=ssh git clone git@github.com:x-qdo/pipeline-shared-library.git
+
+FROM alpine:latest
+
+WORKDIR /root/
+COPY --from=builder ./pipeline-shared-library .
+COPY ssh-test.sh .
+RUN chmod +x ssh-test.sh
+CMD ["sh"]
